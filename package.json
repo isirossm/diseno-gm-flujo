@@ -1,0 +1,53 @@
+{
+  "name": "walmart-chile-diseno-gm",
+  "version": "1.0.0",
+  "description": "Walmart Chile GM Design System Prototype",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "node package-app.js",
+    "build:mac": "node package-app.js"
+  },
+  "dependencies": {
+    "cloudflared": "^0.7.1",
+    "localtunnel": "^2.0.2"
+  },
+  "devDependencies": {
+    "electron": "^31.3.1",
+    "electron-builder": "^24.13.3",
+    "electron-packager": "^17.1.2"
+  },
+  "build": {
+    "appId": "com.walmart.chile.disenogm",
+    "productName": "Walmart Chile Diseno GM",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "Flujo.html",
+      "Compradores.html",
+      "Apps de campo.html",
+      "gm-design-system.css",
+      "App 4/**/*",
+      "Img/**/*",
+      "Ico/**/*",
+      "Producción copy/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ],
+      "icon": "Img/Logo fav.png"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "Img/Logo fav.png",
+      "category": "public.app-category.developer-tools"
+    }
+  }
+}
