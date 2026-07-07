@@ -68,7 +68,7 @@
 
   function Viaje({ go, profile }) {
     const [approved, setApproved] = React.useState(false);
-    const isCompradores = profile && profile.id === "compradores";
+    const useNewTravelView = profile && (profile.id === "compradores" || profile.id === "valentina");
 
     const totalWish  = WISHLIST.reduce((a, c) => a + c.items.length, 0);
     const foundWish  = WISHLIST.reduce((a, c) => a + c.items.filter((x) => x.found).length, 0);
@@ -81,8 +81,8 @@
         subtitle: "Fase 1 · Investigación — recorrido de mercados y proveedores en Asia",
       }),
 
-      // resumen viaje (oculto para compradores)
-      !isCompradores && e("div", { className: "gm-card", style: { padding: "18px 22px", marginBottom: 16, display: "flex", gap: 20, alignItems: "center" } },
+      // resumen viaje (oculto para compradores y valentina)
+      !useNewTravelView && e("div", { className: "gm-card", style: { padding: "18px 22px", marginBottom: 16, display: "flex", gap: 20, alignItems: "center" } },
         e("div", { style: { width: 52, height: 52, borderRadius: 14, background: "var(--wm-sb-200)", color: "var(--wm-sb-400)", display: "grid", placeItems: "center", flex: "0 0 auto" } },
           e(I.plane, { size: 26 })),
         e("div", { style: { flex: 1 } },
@@ -91,8 +91,8 @@
             "3 – 9 mar 2026 · Shanghai · Cantón · Ningbo · Valentina Ríos")),
         e(Chip, { variant: "active", label: "En curso" })),
 
-      // itinerario: fila de círculos (default) o calendario mensual completo (compradores)
-      isCompradores
+      // itinerario: fila de círculos (default/renata) o calendario mensual completo (compradores/valentina)
+      useNewTravelView
         ? e("div", { className: "gm-card", style: { marginBottom: 14, padding: "18px 20px" } },
             // encabezado L M X J V S D
             e("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 6, marginBottom: 4 } },
