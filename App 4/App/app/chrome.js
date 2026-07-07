@@ -367,8 +367,11 @@
     );
   }
 
-  function FlowTimelineCard({ screen, go }) {
+  const COMPRADORES_DISABLED_SCREENS = new Set(["muestras", "fichas", "contramuestras", "fichas_revisadas", "validacion"]);
+
+  function FlowTimelineCard({ screen, go, profile }) {
     const steps = GM.steps;
+    const isCompradores = profile && profile.id === "compradores";
     return e("div", {
       style: {
         display: "flex", alignItems: "center", gap: 0,
@@ -379,25 +382,30 @@
         fontFamily: "var(--font-sans)",
       }
     },
-      steps.map((s, i) => [
-        i > 0 && e("span", { key: "sep-" + s.id, style: { color: "var(--wm-ns-200)", fontSize: 13, padding: "0 6px", userSelect: "none" } }, "/"),
-        e("button", {
-          key: s.id,
-          onClick: () => go(s.screen),
-          style: {
-            background: "none", border: "none", cursor: "pointer",
-            fontSize: 13,
-            fontWeight: s.screen === screen ? 700 : 500,
-            color: s.screen === screen ? "var(--wm-sb-500)" : "var(--wm-ns-400)",
-            padding: "0 4px", whiteSpace: "nowrap",
-            textDecoration: s.screen === screen ? "underline" : "none",
-            textUnderlineOffset: "3px",
-            transition: "color 0.12s",
-          },
-          onMouseEnter: (ev) => { if (s.screen !== screen) ev.currentTarget.style.color = "var(--wm-ns-600)"; },
-          onMouseLeave: (ev) => { if (s.screen !== screen) ev.currentTarget.style.color = "var(--wm-ns-400)"; },
-        }, s.label)
-      ])
+      steps.map((s, i) => {
+        const isDisabled = isCompradores && COMPRADORES_DISABLED_SCREENS.has(s.screen);
+        return [
+          i > 0 && e("span", { key: "sep-" + s.id, style: { color: "var(--wm-ns-200)", fontSize: 13, padding: "0 6px", userSelect: "none" } }, "/"),
+          e("button", {
+            key: s.id,
+            onClick: () => { if (!isDisabled) go(s.screen); },
+            style: {
+              background: "none", border: "none",
+              cursor: isDisabled ? "default" : "pointer",
+              pointerEvents: isDisabled ? "none" : "auto",
+              fontSize: 13,
+              fontWeight: s.screen === screen ? 700 : 500,
+              color: isDisabled ? "var(--wm-ns-200)" : s.screen === screen ? "var(--wm-sb-500)" : "var(--wm-ns-400)",
+              padding: "0 4px", whiteSpace: "nowrap",
+              textDecoration: !isDisabled && s.screen === screen ? "underline" : "none",
+              textUnderlineOffset: "3px",
+              transition: "color 0.12s",
+            },
+            onMouseEnter: (ev) => { if (!isDisabled && s.screen !== screen) ev.currentTarget.style.color = "var(--wm-ns-600)"; },
+            onMouseLeave: (ev) => { if (!isDisabled && s.screen !== screen) ev.currentTarget.style.color = "var(--wm-ns-400)"; },
+          }, s.label)
+        ];
+      })
     );
   }
   window.GMChrome = { Masthead, Sidebar, FlowBar, SubBar, FlowTimelineCard };
