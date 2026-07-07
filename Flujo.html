@@ -4985,6 +4985,8 @@
         const foundProfile = PROFILES.find(p => p.email === selectedEmail);
         if (foundProfile) {
           setUser(foundProfile);
+          const GM_PROFILE_BY_ACCESS = { moda: 'valentina', compras: 'compradores' };
+          localStorage.setItem('gm_profile', GM_PROFILE_BY_ACCESS[foundProfile.access] || 'default');
           if (foundProfile.access === 'moda' || foundProfile.access === 'compras') {
             navigate('moda-mujer');
           } else if (foundProfile.access === 'practicante') {
