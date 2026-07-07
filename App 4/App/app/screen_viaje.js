@@ -22,6 +22,25 @@
     Ningbo:   "#f59e0b",
   };
 
+  const CALENDAR_BY_DAY = CALENDAR.reduce((acc, d) => { acc[d.day] = d; return acc; }, {});
+  const WEEKDAY_LABELS = ["L", "M", "X", "J", "V", "S", "D"];
+
+  // Grilla del mes completo (lunes a domingo, con días fuera del mes incluidos)
+  function buildMonthGrid(year, month) {
+    const firstOfMonth = new Date(year, month, 1);
+    const startOffset = (firstOfMonth.getDay() + 6) % 7; // 0 = lunes
+    const gridStart = new Date(year, month, 1 - startOffset);
+    const cells = [];
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(gridStart);
+      d.setDate(gridStart.getDate() + i);
+      cells.push({ date: d.getDate(), inMonth: d.getMonth() === month });
+    }
+    return cells;
+  }
+
+  const MARCH_2026_GRID = buildMonthGrid(2026, 2);
+
   const WISHLIST = [
     { cat: "Telas y materiales", items: [
       { name: "Lino-viscosa 70/30",       found: true },
@@ -47,8 +66,9 @@
   ];
   const CNY_TO_CLP = 87.4; // tasa aprox
 
-  function Viaje({ go }) {
+  function Viaje({ go, profile }) {
     const [approved, setApproved] = React.useState(false);
+    const isCompradores = profile && profile.id === "compradores";
 
     const totalWish  = WISHLIST.reduce((a, c) => a + c.items.length, 0);
     const foundWish  = WISHLIST.reduce((a, c) => a + c.items.filter((x) => x.found).length, 0);
@@ -61,8 +81,8 @@
         subtitle: "Fase 1 · Investigación — recorrido de mercados y proveedores en Asia",
       }),
 
-      // resumen viaje
-      e("div", { className: "gm-card", style: { padding: "18px 22px", marginBottom: 16, display: "flex", gap: 20, alignItems: "center" } },
+      // resumen viaje (oculto para compradores)
+      !isCompradores && e("div", { className: "gm-card", style: { padding: "18px 22px", marginBottom: 16, display: "flex", gap: 20, alignItems: "center" } },
         e("div", { style: { width: 52, height: 52, borderRadius: 14, background: "var(--wm-sb-200)", color: "var(--wm-sb-400)", display: "grid", placeItems: "center", flex: "0 0 auto" } },
           e(I.plane, { size: 26 })),
         e("div", { style: { flex: 1 } },
@@ -71,34 +91,60 @@
             "3 – 9 mar 2026 · Shanghai · Cantón · Ningbo · Valentina Ríos")),
         e(Chip, { variant: "active", label: "En curso" })),
 
-      // calendario de itinerario
-      e("div", { className: "gm-card", style: { marginBottom: 14, padding: "18px 20px" } },
-        e("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--wm-ns-300)", marginBottom: 14 } }, "Itinerario · Marzo 2026"),
-        // encabezado de mes mini
-        e("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 6 } },
-          CALENDAR.map((d) => {
-            const color = CITY_COLOR[d.city];
-            const isToday = !d.done;
-            return e("div", { key: d.day,
-              style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4 } },
-              // día de semana
-              e("div", { style: { fontSize: 10, fontWeight: 600, color: "var(--wm-ns-300)", textTransform: "uppercase" } }, d.dow),
-              // número con fondo
-              e("div", { style: {
-                width: 34, height: 34, borderRadius: "50%", display: "grid", placeItems: "center",
-                background: isToday ? color : d.done ? color + "22" : "var(--wm-ns-100)",
-                border: isToday ? "2px solid " + color : "2px solid " + (d.done ? color : "transparent"),
-                color: isToday ? "#fff" : d.done ? color : "var(--wm-ns-300)",
-                fontWeight: 700, fontSize: 14 } }, d.day),
-              // ciudad
-              e("div", { style: { fontSize: 10, fontWeight: 600, color: d.done || isToday ? color : "var(--wm-ns-200)", textAlign: "center", lineHeight: 1.2 } }, d.city));
-          })),
-        // leyenda
-        e("div", { style: { display: "flex", gap: 14, marginTop: 14, flexWrap: "wrap" } },
-          Object.entries(CITY_COLOR).map(([city, color]) =>
-            e("div", { key: city, style: { display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--wm-ns-400)" } },
-              e("div", { style: { width: 8, height: 8, borderRadius: "50%", background: color, flex: "0 0 auto" } }),
-              city)))),
+      // itinerario: fila de círculos (default) o calendario mensual completo (compradores)
+      isCompradores
+        ? e("div", { className: "gm-card", style: { marginBottom: 14, padding: "18px 20px" } },
+            // encabezado L M X J V S D
+            e("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 6, marginBottom: 4 } },
+              WEEKDAY_LABELS.map((wd, i) =>
+                e("div", { key: wd + i, style: { fontSize: 10, fontWeight: 700, letterSpacing: ".04em", color: "var(--wm-ns-300)", textAlign: "center", padding: "4px 0" } }, wd))),
+            // grilla del mes
+            e("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 6 } },
+              MARCH_2026_GRID.map((cell, i) => {
+                const trip = cell.inMonth ? CALENDAR_BY_DAY[cell.date] : null;
+                const color = trip ? CITY_COLOR[trip.city] : null;
+                const isToday = trip && !trip.done;
+                return e("div", { key: i, style: { display: "flex", justifyContent: "center", padding: "3px 0" } },
+                  e("div", { style: {
+                    width: 30, height: 30, borderRadius: "50%", display: "grid", placeItems: "center",
+                    background: !cell.inMonth ? "transparent" : isToday ? color : trip ? color + "22" : "transparent",
+                    border: trip ? "2px solid " + color : "none",
+                    color: !cell.inMonth ? "var(--wm-ns-200)" : isToday ? "#fff" : trip ? color : "var(--wm-ns-500)",
+                    fontWeight: trip ? 700 : 500, fontSize: 12.5 } }, cell.date));
+              })),
+            // leyenda
+            e("div", { style: { display: "flex", gap: 14, marginTop: 14, flexWrap: "wrap" } },
+              Object.entries(CITY_COLOR).map(([city, color]) =>
+                e("div", { key: city, style: { display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--wm-ns-400)" } },
+                  e("div", { style: { width: 8, height: 8, borderRadius: "50%", background: color, flex: "0 0 auto" } }),
+                  city))))
+        : e("div", { className: "gm-card", style: { marginBottom: 14, padding: "18px 20px" } },
+            e("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--wm-ns-300)", marginBottom: 14 } }, "Itinerario · Marzo 2026"),
+            // encabezado de mes mini
+            e("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 6 } },
+              CALENDAR.map((d) => {
+                const color = CITY_COLOR[d.city];
+                const isToday = !d.done;
+                return e("div", { key: d.day,
+                  style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4 } },
+                  // día de semana
+                  e("div", { style: { fontSize: 10, fontWeight: 600, color: "var(--wm-ns-300)", textTransform: "uppercase" } }, d.dow),
+                  // número con fondo
+                  e("div", { style: {
+                    width: 34, height: 34, borderRadius: "50%", display: "grid", placeItems: "center",
+                    background: isToday ? color : d.done ? color + "22" : "var(--wm-ns-100)",
+                    border: isToday ? "2px solid " + color : "2px solid " + (d.done ? color : "transparent"),
+                    color: isToday ? "#fff" : d.done ? color : "var(--wm-ns-300)",
+                    fontWeight: 700, fontSize: 14 } }, d.day),
+                  // ciudad
+                  e("div", { style: { fontSize: 10, fontWeight: 600, color: d.done || isToday ? color : "var(--wm-ns-200)", textAlign: "center", lineHeight: 1.2 } }, d.city));
+              })),
+            // leyenda
+            e("div", { style: { display: "flex", gap: 14, marginTop: 14, flexWrap: "wrap" } },
+              Object.entries(CITY_COLOR).map(([city, color]) =>
+                e("div", { key: city, style: { display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--wm-ns-400)" } },
+                  e("div", { style: { width: 8, height: 8, borderRadius: "50%", background: color, flex: "0 0 auto" } }),
+                  city)))),
 
       // wishlist + registro de compras
       e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 } },
